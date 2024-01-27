@@ -1,13 +1,13 @@
 <h2 dir="auto" tabindex="-1"><strong>National Football Team Statistics</strong></h2>
 <h3 dir="auto" tabindex="-1"><a id="user-content-description" class="anchor" tabindex="-1" href="https://github.com/Zibby92/Garden_Company_Project?tab=readme-ov-file#description" aria-hidden="true"></a>Description&nbsp;</h3>
-<div dir="auto">I found on internet statistics corresponding national teams in football, using that I'm into football i come up an idea to create program to show interesting data using only 3 simple tables. In this project I've focused on SQL most, everything is made in SQLDeveloper and with help of PL/SQL to allow user search only those teams, players etc which interesting them.</div>
+<div dir="auto">I found on internet statistics corresponding national teams in football, using that I'm into football I came up with an idea to create a program that showcases interesting data using only three simple tables. In this project, I've primarily focused on SQL. Everything was developed using SQLDeveloper, with the assistance of PL/SQL, enabling users to search only for teams and players that interest them.</div>
 <div dir="auto">&nbsp;</div>
 <div dir="auto">My main goals during making it are:</div>
 <ul dir="auto">
-<li>- Practice SQL in more advanced tasks</li>
-<li>- Create programs that show interesting statistics</li>
-<li>- Improve my programming skills and strenghten knowleadge which I've got from many on-line courses</li>
-<li>- Encounter with problems at work with bigger project and find best solutions to solve they</li>
+<li>To practice SQL in more advanced tasks</li>
+<li>To create programs that display intriguing statistics</li>
+<li>To enhance my programming skills and reinforce the knowledge gained from various online courses</li>
+<li>To encounter and resolve challenges similar to those faced while working on larger projects</li>
 </ul>
 <div dir="auto">&nbsp;</div>
 <div dir="auto">I used mostly PL/SQL and SQL, all I've wroten in SQLDEVELOPER, table structures and all ideas are mine.&nbsp;</div>
@@ -30,11 +30,11 @@
 <p dir="auto">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;SELECT sysdate FROM DUAL;</p>
 <ul dir="auto">
 <li>If current time shows up then you can download files from folder "INSTALL_SCRIPT" from my respository.</li>
-<li>Next step is to open SQLDeveloper, login to account and paste paths to files that you've downloaded, then just add "@" on the front of each path and click green arrow above "run script", after few minutes it's ready to use</li>
+<li>Next, open SQLDeveloper, log in to your account, paste the paths to the downloaded files, prepend "@" to each path, and click the green arrow labeled "run script". After a few minutes, the program will be ready for use</li>
 </ul>
 <p dir="auto"><img src="https://github.com/Zibby92/National_football_teams_statistics/blob/main/SCRIPTS/inslall_guide_1.jpg" alt="install_guide" /></p>
+<p dir="auto">And it's ready to use. All tables, data and programs will be working.</p>
 <p dir="auto">&nbsp;</p>
-<div dir="auto">And it's ready to use. All tables, data and programs will be working.</div>
 <div dir="auto">Working functionalities:</div>
 <div dir="auto">&nbsp;</div>
 <div dir="auto">Regarding national teams, in brackets write contry that you're interested for:</div>
