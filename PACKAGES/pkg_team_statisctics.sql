@@ -1,16 +1,16 @@
 create or replace PACKAGE pkg_team_statisctics IS
 
       PROCEDURE p_main_statistic_app(in_team_name VARCHAR2);
-      PROCEDURE show_results_stats(in_team_name VARCHAR2) ;
+      PROCEDURE p_show_results (in_team_name VARCHAR2); 
 
 END pkg_team_statisctics;
 
 /
 
 create or replace PACKAGE BODY pkg_team_statisctics IS
-    
-     TYPE r_results_stats IS RECORD ( matches_amount NUMBER, at_home NUMBER, away NUMBER, percents NUMBER);
-     TYPE nt_results_stats IS TABLE OF r_results_stats;
+ 
+    TYPE r_results_stats IS RECORD ( matches_amount NUMBER, at_home NUMBER, away NUMBER,win_or_loss VARCHAR2(100));
+    TYPE nt_results_stats IS TABLE OF r_results_stats;
 
     FUNCTION f_amount_of_matches(in_team_name VARCHAR2) RETURN NUMBER 
     IS 
@@ -66,42 +66,73 @@ create or replace PACKAGE BODY pkg_team_statisctics IS
         v_final_number:= ROUND(in_goals/in_matches,4);
         RETURN v_final_number;    
     END f_average_lost_goals_per_match;
-
-    PROCEDURE show_results_stats(in_team_name VARCHAR2) 
-    IS 
-        v_team_name VARCHAR2(50) := pkg_check_data.check_country_name(in_team_name);
-        v_one_line VARCHAR2(100);
-        nt_stats nt_results_stats := nt_results_stats();
-        
-        FUNCTION f_stats_of_score (in_team VARCHAR2) RETURN nt_results_stats
-        IS 
-            nt_final_results_stats nt_results_stats:= nt_results_stats();
-            CURSOR all_stats IS 
-                SELECT g.all_matches, g.at_home, g.away 
-                , ROUND((g.all_matches /(SELECT COUNT(*) FROM results WHERE home_team = 'Poland' OR away_team = 'Poland') * 100),2) percents
-                FROM    (SELECT COUNT(*) all_matches, home_score at_home, away_score away
-                        FROM RESULTS WHERE home_team = v_team_name OR away_team = v_team_name
+    
+    PROCEDURE p_show_results (in_team_name VARCHAR2) 
+    IS
+    v_varchar varchar2(100);
+        CURSOR c_home_stats IS
+            SELECT COUNT(*) all_matches, home_score at_home, away_score away, 
+                        CASE WHEN home_score > away_score THEN 'WIN' 
+                             WHEN home_score < away_score THEN 'LOSS'
+                             ELSE 'TIE'
+                             END
+                        FROM RESULTS WHERE home_team = 'Poland'-- OR away_team = 'Poland'
                         GROUP BY home_score,away_score
-                        ORDER BY 1 DESC) g;
-        BEGIN 
-            OPEN all_stats;
-            FETCH all_stats BULK COLLECT INTO nt_final_results_stats;
-            CLOSE all_stats;
-            RETURN nt_final_results_stats;    
-        END f_stats_of_score;
-        
-        BEGIN 
-            nt_stats := f_stats_of_score(in_team => v_team_name);
-            DBMS_OUTPUT.PUT_LINE('Team ' || v_team_name ); 
-            FOR i IN 1..nt_stats.LAST
-                LOOP
-                   v_one_line := 'Matches with score : ' || nt_stats(i).at_home || ':' || nt_stats(i).away
-                                || ' - ' || nt_stats(i).matches_amount || '. Percents: ' || TO_CHAR(nt_stats(i).percents,'90.99') ;   
-                    DBMS_OUTPUT.PUT_LINE(v_one_line);
-                END LOOP;
-    END show_results_stats; 
-        
-
+                        ORDER BY 1 DESC;
+         CURSOR c_away_stats IS
+            SELECT COUNT(*) all_matches, home_score at_home, away_score away,
+                        CASE WHEN home_score < away_score THEN 'WIN' 
+                             WHEN home_score > away_score THEN 'LOSS'
+                             ELSE 'TIE'
+                             END
+                        FROM RESULTS WHERE away_team = 'Poland'
+                        GROUP BY home_score,away_score
+                        ORDER BY 1 DESC;
+            FUNCTION f_get_home_stats (in_team_name VARCHAR2) RETURN nt_results_stats
+            IS
+                v_table_results_stats nt_results_stats := nt_results_stats();
+            BEGIN
+                OPEN c_home_stats;
+                FETCH c_home_stats BULK COLLECT INTO v_table_results_stats;
+                CLOSE c_home_stats;
+            RETURN v_table_results_stats;
+            END f_get_home_stats;
+            
+               FUNCTION f_get_away_stats (in_team_name VARCHAR2) RETURN nt_results_stats
+            IS
+                v_table_results_stats nt_results_stats := nt_results_stats();
+            BEGIN
+                OPEN c_away_stats;
+                FETCH c_away_stats BULK COLLECT INTO v_table_results_stats;
+                CLOSE c_away_stats;
+            RETURN v_table_results_stats;
+            END f_get_away_stats;
+            
+            PROCEDURE p_show_stats (in_nt_results_stats nt_results_stats)
+            IS
+                v_amount_of_matches NUMBER := 0;
+                v_temporary_percents NUMBER;
+            BEGIN
+                FOR i IN 1..in_nt_results_stats.LAST
+                    LOOP
+                       v_amount_of_matches := v_amount_of_matches +  in_nt_results_stats(i).matches_amount;
+                    END LOOP;
+                FOR i IN 1..in_nt_results_stats.LAST 
+                    LOOP
+                        v_temporary_percents := ROUND(in_nt_results_stats(i).matches_amount/v_amount_of_matches * 100,2);
+                        DBMS_OUTPUT.PUT_LINE('matches - ' || in_nt_results_stats(i).matches_amount
+                        || ' result: ' || in_nt_results_stats(i).at_home || ':'|| in_nt_results_stats(i).away 
+                        ||' '|| in_nt_results_stats(i).win_or_loss
+                        || ' percent: ' || v_temporary_percents);
+                    END LOOP;
+            END p_show_stats;
+            
+     BEGIN 
+      DBMS_OUTPUT.PUT_LINE('Home results: ');
+      p_show_stats(f_get_home_stats(in_team_name));
+      DBMS_OUTPUT.PUT_LINE('Away results: ');
+      p_show_stats(f_get_away_stats(in_team_name));
+    END p_show_results;
 
     PROCEDURE p_main_statistic_app(in_team_name VARCHAR2) 
     IS 
