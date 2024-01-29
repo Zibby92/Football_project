@@ -69,14 +69,14 @@ create or replace PACKAGE BODY pkg_team_statisctics IS
     
     PROCEDURE p_show_results (in_team_name VARCHAR2) 
     IS
-    v_varchar varchar2(100);
+    v_team_name VARCHAR2(50):= pkg_check_data.check_country_name(in_team_name);
         CURSOR c_home_stats IS
             SELECT COUNT(*) all_matches, home_score at_home, away_score away, 
                         CASE WHEN home_score > away_score THEN 'WIN' 
                              WHEN home_score < away_score THEN 'LOSS'
                              ELSE 'TIE'
                              END
-                        FROM RESULTS WHERE home_team = 'Poland'-- OR away_team = 'Poland'
+                        FROM RESULTS WHERE home_team = v_team_name
                         GROUP BY home_score,away_score
                         ORDER BY 1 DESC;
          CURSOR c_away_stats IS
@@ -85,10 +85,10 @@ create or replace PACKAGE BODY pkg_team_statisctics IS
                              WHEN home_score > away_score THEN 'LOSS'
                              ELSE 'TIE'
                              END
-                        FROM RESULTS WHERE away_team = 'Poland'
+                        FROM RESULTS WHERE away_team = v_team_name
                         GROUP BY home_score,away_score
                         ORDER BY 1 DESC;
-            FUNCTION f_get_home_stats (in_team_name VARCHAR2) RETURN nt_results_stats
+            FUNCTION f_get_home_stats (v_team_name VARCHAR2) RETURN nt_results_stats
             IS
                 v_table_results_stats nt_results_stats := nt_results_stats();
             BEGIN
@@ -98,7 +98,7 @@ create or replace PACKAGE BODY pkg_team_statisctics IS
             RETURN v_table_results_stats;
             END f_get_home_stats;
             
-               FUNCTION f_get_away_stats (in_team_name VARCHAR2) RETURN nt_results_stats
+               FUNCTION f_get_away_stats (v_team_name VARCHAR2) RETURN nt_results_stats
             IS
                 v_table_results_stats nt_results_stats := nt_results_stats();
             BEGIN
@@ -112,9 +112,18 @@ create or replace PACKAGE BODY pkg_team_statisctics IS
             IS
                 v_amount_of_matches NUMBER := 0;
                 v_temporary_percents NUMBER;
+                v_amount_of_win NUMBER := 0;
+                v_amount_of_loss NUMBER := 0;
+                v_amount_of_ties NUMBER := 0;
             BEGIN
                 FOR i IN 1..in_nt_results_stats.LAST
                     LOOP
+                    
+                        CASE WHEN in_nt_results_stats(i).win_or_loss = 'WIN' THEN  v_amount_of_win := v_amount_of_win + in_nt_results_stats(i).matches_amount ;
+                             WHEN in_nt_results_stats(i).win_or_loss = 'LOSS' THEN v_amount_of_loss := v_amount_of_loss + in_nt_results_stats(i).matches_amount;
+                             WHEN in_nt_results_stats(i).win_or_loss = 'TIE' THEN v_amount_of_ties := v_amount_of_ties + in_nt_results_stats(i).matches_amount;
+                        END CASE;
+                        
                        v_amount_of_matches := v_amount_of_matches +  in_nt_results_stats(i).matches_amount;
                     END LOOP;
                 FOR i IN 1..in_nt_results_stats.LAST 
@@ -125,13 +134,16 @@ create or replace PACKAGE BODY pkg_team_statisctics IS
                         ||' '|| in_nt_results_stats(i).win_or_loss
                         || ' percent: ' || v_temporary_percents);
                     END LOOP;
+                    DBMS_OUTPUT.PUT_LINE('TOTAL WINS: ' || v_amount_of_win);
+                    DBMS_OUTPUT.PUT_LINE('TOTAL LOSS: ' || v_amount_of_loss);
+                    DBMS_OUTPUT.PUT_LINE('TOTAL TIES: ' || v_amount_of_ties);
             END p_show_stats;
             
      BEGIN 
       DBMS_OUTPUT.PUT_LINE('Home results: ');
-      p_show_stats(f_get_home_stats(in_team_name));
+      p_show_stats(f_get_home_stats(v_team_name));
       DBMS_OUTPUT.PUT_LINE('Away results: ');
-      p_show_stats(f_get_away_stats(in_team_name));
+      p_show_stats(f_get_away_stats(v_team_name));
     END p_show_results;
 
     PROCEDURE p_main_statistic_app(in_team_name VARCHAR2) 
