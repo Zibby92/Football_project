@@ -55,8 +55,53 @@ create or replace PACKAGE BODY pkg_team_statisctics IS
                 DBMS_OUTPUT.PUT_LINE('Won: ' || in_r_two_teams_statistics.win_away || ' ' || 'loss: ' || in_r_two_teams_statistics.loss_away 
                                     || ' tied: ' ||in_r_two_teams_statistics.tie_away );
             END show_statistics;
+            
+            PROCEDURE goals_amount (in_team_one_name VARCHAR2, in_team_two_name VARCHAR2) 
+            IS 
+            TYPE r_goals_amount IS RECORD (home_team VARCHAR2(50), home_score NUMBER, away_team VARCHAR2(50), away_score NUMBER);
+            TYPE ntt_goals_amount IS TABLE OF r_goals_amount;
+            v_ntt_goals_amount ntt_goals_amount;
+            CURSOR c_get_amount_of_goals IS
+                SELECT r.home_team, SUM(r.home_score) scored_goals, r.away_team,  SUM(r.away_score) losted_goals
+                FROM results r
+                WHERE r.home_team = in_team_one_name AND r.away_team = in_team_two_name OR r.home_team = in_team_two_name AND r.away_team = in_team_one_name
+                GROUP BY r.home_team,  r.away_team;
+             BEGIN
+                OPEN C_get_amount_of_goals;
+                FETCH c_get_amount_of_goals BULK COLLECT INTO v_ntt_goals_amount;
+                CLOSE C_get_amount_of_goals;
+                    FOR i IN 1..v_ntt_goals_amount.LAST 
+                        LOOP
+                            DBMS_OUTPUT.PUT_LINE('At home team: '|| v_ntt_goals_amount(i).home_team || ' scored ' || v_ntt_goals_amount(i).home_score || ' goals'
+                                                || ' against team ' || v_ntt_goals_amount(i).away_team || ' which scored ' ||v_ntt_goals_amount(i).away_score);
+                        END LOOP;
+            END goals_amount;
+            
+            PROCEDURE best_scorers(in_team_one_name VARCHAR2, in_team_two_name VARCHAR2)
+            IS
+            TYPE r_best_scorer IS RECORD ( scorer VARCHAR2(70), goals NUMBER);
+            TYPE ntt_best_scorer IS TABLE OF r_best_scorer;
+            v_ntt_best_scorer ntt_best_scorer;
+            CURSOR c_best_scorers IS
+                SELECT scorer, count(*)
+                FROM goal_scorers
+                WHERE home_team = in_team_one_name AND away_team = in_team_two_name OR away_team = in_team_one_name AND home_team = in_team_two_name
+                GROUP BY scorer
+                ORDER BY count(*) DESC FETCH FIRST 3 ROWS ONLY;
+            BEGIN 
+                OPEN c_best_scorers;
+                FETCH c_best_scorers BULK COLLECT INTO v_ntt_best_scorer;
+                CLOSE c_best_scorers;
+                DBMS_OUTPUT.PUT_LINE('Players who scored most goals: ');
+                    FOR i IN 1..v_ntt_best_scorer.LAST
+                        LOOP
+                            DBMS_OUTPUT.PUT_LINE(v_ntt_best_scorer(i).scorer || ' goals: ' ||v_ntt_best_scorer(i).goals);
+                        END LOOP;
+            END best_scorers;
     BEGIN 
          show_statistics( get_statistics( in_team_one_name,in_team_two_name) ); 
+         goals_amount(in_team_one_name, in_team_two_name);
+         best_scorers(in_team_one_name, in_team_two_name);
     END p_two_teams_statistics;
 
 
