@@ -1,8 +1,8 @@
 create or replace PACKAGE pkg_team_statisctics IS
 
-      PROCEDURE p_main_statistic_app(in_team_name VARCHAR2);
-      PROCEDURE p_show_results (in_team_name VARCHAR2); 
-
+    PROCEDURE p_main_statistic_app(in_team_name VARCHAR2);
+    PROCEDURE p_statistic_of_results (in_team_name VARCHAR2); 
+    PROCEDURE p_two_teams_statistics (in_team_one VARCHAR2, in_team_two VARCHAR2);
 END pkg_team_statisctics;
 
 /
@@ -11,6 +11,54 @@ create or replace PACKAGE BODY pkg_team_statisctics IS
  
     TYPE r_results_stats IS RECORD ( matches_amount NUMBER, at_home NUMBER, away NUMBER,win_or_loss VARCHAR2(100));
     TYPE nt_results_stats IS TABLE OF r_results_stats;
+    
+     PROCEDURE p_two_teams_statistics (in_team_one VARCHAR2, in_team_two VARCHAR2)
+     IS
+        in_team_one_name VARCHAR2(50) := pkg_check_data.check_country_name(in_team_one);
+        in_team_two_name VARCHAR2(50) := pkg_check_data.check_country_name(in_team_two);
+        TYPE r_two_teams_statistics IS RECORD (matches_at_home NUMBER, win_at_home NUMBER, loss_at_home NUMBER,
+                                            tie_at_home NUMBER, matches_away NUMBER, win_away NUMBER, loss_away NUMBER, tie_away NUMBER);
+            
+            FUNCTION get_statistics(in_team_one_name VARCHAR2, in_team_two_name VARCHAR2) RETURN r_two_teams_statistics
+            IS 
+            r_final_statistics r_two_teams_statistics;
+            CURSOR c_get_statistics IS
+                WITH home as 
+                    (SELECT COUNT(*) amount_of_matches
+                    ,SUM(CASE WHEN home_score > away_score THEN 1 END) win
+                    ,SUM(CASE WHEN home_score < away_score THEN 1 END) loss
+                    ,SUM(CASE WHEN home_score = away_score THEN 1 END) tie 
+                    FROM results where home_team = in_team_one_name AND away_team = in_team_two_name),
+                    away as 
+                    (SELECT COUNT(*) amount_of_matches 
+                    ,SUM(CASE WHEN home_score > away_score THEN 1 END) loss
+                    ,SUM(CASE WHEN home_score < away_score THEN 1 END) win
+                    ,SUM(CASE WHEN home_score = away_score THEN 1 END) tie 
+                    FROM results where home_team = in_team_two_name AND away_team = in_team_one_name)
+                    SELECT NVL(home.amount_of_matches,0), NVL(home.win,0), NVL(home.loss,0),NVL(home.tie,0)
+                    , NVL(away.amount_of_matches,0),NVL(away.win,0), NVL(away.loss,0), NVL(away.tie,0) 
+                    FROM home, away;
+            BEGIN
+                OPEN c_get_statistics;
+                FETCH c_get_statistics INTO r_final_statistics;
+                CLOSE c_get_statistics;
+                RETURN r_final_statistics;
+            END get_statistics;
+            
+            PROCEDURE show_statistics(in_r_two_teams_statistics r_two_teams_statistics)
+            IS 
+            BEGIN
+                DBMS_OUTPUT.PUT_LINE('Team: ' || in_team_one_name || ' played at home with '|| in_team_two_name || ' '|| in_r_two_teams_statistics.matches_at_home || ' times');
+                DBMS_OUTPUT.PUT_LINE('Won: ' || in_r_two_teams_statistics.win_at_home || ' ' || 'loss: ' || in_r_two_teams_statistics.loss_at_home 
+                                    || ' tied: ' ||in_r_two_teams_statistics.tie_at_home );
+                DBMS_OUTPUT.PUT_LINE('Team: ' || in_team_one_name || ' played away with '|| in_team_two_name || ' '|| in_r_two_teams_statistics.matches_away || ' times');
+                DBMS_OUTPUT.PUT_LINE('Won: ' || in_r_two_teams_statistics.win_away || ' ' || 'loss: ' || in_r_two_teams_statistics.loss_away 
+                                    || ' tied: ' ||in_r_two_teams_statistics.tie_away );
+            END show_statistics;
+    BEGIN 
+         show_statistics( get_statistics( in_team_one_name,in_team_two_name) ); 
+    END p_two_teams_statistics;
+
 
     FUNCTION f_amount_of_matches(in_team_name VARCHAR2) RETURN NUMBER 
     IS 
@@ -67,7 +115,7 @@ create or replace PACKAGE BODY pkg_team_statisctics IS
         RETURN v_final_number;    
     END f_average_lost_goals_per_match;
     
-    PROCEDURE p_show_results (in_team_name VARCHAR2) 
+    PROCEDURE p_statistic_of_results (in_team_name VARCHAR2) 
     IS
     v_team_name VARCHAR2(50):= pkg_check_data.check_country_name(in_team_name);
         CURSOR c_home_stats IS
@@ -144,7 +192,7 @@ create or replace PACKAGE BODY pkg_team_statisctics IS
       p_show_stats(f_get_home_stats(v_team_name));
       DBMS_OUTPUT.PUT_LINE('Away results: ');
       p_show_stats(f_get_away_stats(v_team_name));
-    END p_show_results;
+    END p_statistic_of_results;
 
     PROCEDURE p_main_statistic_app(in_team_name VARCHAR2) 
     IS 
