@@ -39,8 +39,9 @@
 <div dir="auto">&nbsp;</div>
 <div dir="auto">Regarding national teams, in brackets write contry that you're interested for:</div>
 <ol dir="auto">
-<li>pkg_team_statisctics.p_main_statistic_app() - generally statistics about goals, matches etc.</li>
-<li>pkg_team_statisctics.show_results_stats() - statistics regarding results.</li>
+<li>pkg_team_statisctics.p_main_statistic_app(country) - generally statistics about goals, matches etc.</li>
+<li>pkg_team_statisctics.show_results_stats(country) - statistics regarding results.</li>
+<li>pkg_team_statisctics.p_two_teams_statistics(country1, country2 ) - showing statistics between two chosen teams.</li>
 </ol>
 <p>&nbsp;</p>
 <p>Project is in progress, every day I'll be trying add new interesting functionalities and extend it.</p>
