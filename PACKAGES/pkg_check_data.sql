@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE pkg_check_data IS
     FUNCTION f_check_scorer(in_scorer_name VARCHAR2) RETURN VARCHAR2;    
 END pkg_check_data;
 /
-CREATE OR REPLACE PACKAGE BODY pkg_check_data IS
+CREATE OR REPLACE PACKAGE BODY pkg_check_data IS 
 
     FUNCTION check_country_name (in_country_name VARCHAR2) RETURN VARCHAR2
     IS
